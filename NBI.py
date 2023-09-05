@@ -1,261 +1,21 @@
 from spacy.matcher import DependencyMatcher
 from spacy import displacy
-from not_because_dependency_patterns import not_because_dependency_patterns
+from not_because_dependency_patterns import *
 import en_core_web_trf
+import pandas as pd
 
 nlp = en_core_web_trf.load(exclude=["lemmatizer"])
 print("INFO: spaCy initialized successfully.")
 
-# not <neg VERB >mark because
-neg_anchorVerb_markBec = [
-    # anchor token: some verb (anchor_verb)
-    {"RIGHT_ID": "anchor_verb", "RIGHT_ATTRS": {"POS": "VERB"}},
-    # verb > neg: anchor_verb is the right parent of a negation
-    {
-        "LEFT_ID": "anchor_verb",
-        "REL_OP": ">",
-        "RIGHT_ID": "negation_particle",
-        "RIGHT_ATTRS": {"DEP": "neg"},
-    },
-    # verb >mark "because": anchor_verb is the left parent of "because", "because" is a marker for anchor_verb
-    {
-        "LEFT_ID": "anchor_verb",
-        "REL_OP": ">++",
-        "RIGHT_ID": "because",
-        "RIGHT_ATTRS": {"ORTH": "because", "DEP": "mark"},
-    },
-]
-
-# not <neg VERB >prep because
-neg_anchorVerb_prepBec = [
-    # anchor token: some verb (anchor_verb)
-    {"RIGHT_ID": "anchor_verb", "RIGHT_ATTRS": {"POS": "VERB"}},
-    # verb > neg: anchor_verb is the right parent of a negation
-    {
-        "LEFT_ID": "anchor_verb",
-        "REL_OP": ">",
-        "RIGHT_ID": "negation_particle",
-        "RIGHT_ATTRS": {"DEP": "neg"},
-    },
-    # verb >prep "because": anchor_verb is the left parent of "because", "because" is a preposition for anchor_verb
-    {
-        "LEFT_ID": "anchor_verb",
-        "REL_OP": ">++",
-        "RIGHT_ID": "because",
-        "RIGHT_ATTRS": {"ORTH": "because", "DEP": "prep"},
-    },
-]
-
-# not <neg VERB >advcl VERB >mark because
-neg_anchorVerb_advcl_markBec = [
-    # anchor token: some verb to be anchor_verb
-    {"RIGHT_ID": "anchor_verb", "RIGHT_ATTRS": {"POS": "VERB"}},
-    # anchor_verb > neg: anchor_verb is the immediate head and right parent of a negation
-    {
-        "LEFT_ID": "anchor_verb",
-        "REL_OP": ">",
-        "RIGHT_ID": "negation_particle",
-        "RIGHT_ATTRS": {"DEP": "neg"},
-    },
-    # anchor_verb > advcl_child_verb: advcl_child_verb is the adverbial clause modifier and child of anchor_verb
-    {
-        "LEFT_ID": "anchor_verb",
-        "REL_OP": ">",
-        "RIGHT_ID": "advcl_child_verb",
-        "RIGHT_ATTRS": {"DEP": "advcl"},
-    },
-    # advcl_child_verb > "because": "because" is a marker for and left child of advcl_child_verb
-    {
-        "LEFT_ID": "advcl_child_verb",
-        "REL_OP": ">--",
-        "RIGHT_ID": "because",
-        "RIGHT_ATTRS": {"ORTH": "because", "DEP": "mark"},
-    },
-]
-
-# not <neg VERB >ccomp >advcl VERB >mark because
-neg_anchorVerb_ccomp_advcl_markBec = [
-    # anchor token: some verb to be anchor_verb
-    {"RIGHT_ID": "anchor_verb", "RIGHT_ATTRS": {"POS": "VERB"}},
-    # anchor_verb > neg: anchor_verb is the immediate head and right parent of a negation
-    {
-        "LEFT_ID": "anchor_verb",
-        "REL_OP": ">",
-        "RIGHT_ID": "negation_particle",
-        "RIGHT_ATTRS": {"DEP": "neg"},
-    },
-    # anchor_verb > ccomp_child_aux: ccomp_child_aux is the clausal complement and child of anchor_verb
-    {
-        "LEFT_ID": "anchor_verb",
-        "REL_OP": ">",
-        "RIGHT_ID": "ccomp_child_aux",
-        "RIGHT_ATTRS": {"DEP": "ccomp"},
-    },
-    # ccomp_child_aux > advcl_child_verb: advcl_child_verb is the adverbial clause modifier and child of ccomp_child_aux
-    {
-        "LEFT_ID": "ccomp_child_aux",
-        "REL_OP": ">",
-        "RIGHT_ID": "advcl_child_verb",
-        "RIGHT_ATTRS": {"DEP": "advcl"},
-    },
-    # advcl_child_verb > "because": "because" is a marker for and  child of advcl_child_verb
-    {
-        "LEFT_ID": "advcl_child_verb",
-        "REL_OP": ">",
-        "RIGHT_ID": "because",
-        "RIGHT_ATTRS": {"ORTH": "because", "DEP": "mark"},
-    },
-]
-
-# not <neg VERB >advcl >ccomp VERB >mark because
-neg_anchorVerb_advcl_ccomp_markBec = [
-    # anchor token: some verb to be anchor_verb
-    {"RIGHT_ID": "anchor_verb", "RIGHT_ATTRS": {"POS": "VERB"}},
-    # anchor_verb > neg: anchor_verb is the immediate head and right parent of a negation
-    {
-        "LEFT_ID": "anchor_verb",
-        "REL_OP": ">",
-        "RIGHT_ID": "negation_particle",
-        "RIGHT_ATTRS": {"DEP": "neg"},
-    },
-    # anchor_verb > advcl_child_verb: advcl_child_verb is the adverbial clause modifier and child of anchor_verb
-    {
-        "LEFT_ID": "anchor_verb",
-        "REL_OP": ">",
-        "RIGHT_ID": "advcl_child_verb",
-        "RIGHT_ATTRS": {"DEP": "advcl"},
-    },
-    # advcl_child_verb > ccomp_child_aux: ccomp_child_aux is the clausal complement and child of advcl_child_verb
-    {
-        "LEFT_ID": "advcl_child_verb",
-        "REL_OP": ">",
-        "RIGHT_ID": "ccomp_child_aux",
-        "RIGHT_ATTRS": {"DEP": "ccomp"},
-    },
-    # ccomp_child_aux > "because": "because" is a marker for and child of ccomp_child_aux
-    {
-        "LEFT_ID": "ccomp_child_aux",
-        "REL_OP": ">",
-        "RIGHT_ID": "because",
-        "RIGHT_ATTRS": {"ORTH": "because", "DEP": "mark"},
-    },
-]
-
-# not <neg <ccomp VERB >advcl VERB >mark because
-neg_ccomp_anchorVerb_advcl_markBec = [
-    {"RIGHT_ID": "anchor_verb", "RIGHT_ATTRS": {"POS": "VERB"}},
-    {
-        "LEFT_ID": "anchor_verb",
-        "REL_OP": ">",
-        "RIGHT_ID": "ccomp_child_aux",
-        "RIGHT_ATTRS": {"DEP": "ccomp"},
-    },
-    {
-        "LEFT_ID": "ccomp_child_aux",
-        "REL_OP": ">",
-        "RIGHT_ID": "negation_particle",
-        "RIGHT_ATTRS": {"DEP": "neg"},
-    },
-    {
-        "LEFT_ID": "anchor_verb",
-        "REL_OP": ">",
-        "RIGHT_ID": "advcl_child_verb",
-        "RIGHT_ATTRS": {"DEP": "advcl"},
-    },
-    {
-        "LEFT_ID": "advcl_child_verb",
-        "REL_OP": ">",
-        "RIGHT_ID": "because",
-        "RIGHT_ATTRS": {"ORTH": "because", "DEP": "mark"},
-    },
-]
-
-# not <neg VERB >prep >prep because
-neg_anchorVerb_prep_prepBec = [
-    {"RIGHT_ID": "anchor_verb", "RIGHT_ATTRS": {"POS": "VERB"}},
-    {
-        "LEFT_ID": "anchor_verb",
-        "REL_OP": ">",
-        "RIGHT_ID": "negation_particle",
-        "RIGHT_ATTRS": {"DEP": "neg"},
-    },
-    {
-        "LEFT_ID": "anchor_verb",
-        "REL_OP": ">",
-        "RIGHT_ID": "prep1",
-        "RIGHT_ATTRS": {"DEP": "prep"},
-    },
-    {
-        "LEFT_ID": "prep1",
-        "REL_OP": ">",
-        "RIGHT_ID": "prep2",
-        "RIGHT_ATTRS": {"ORTH": "because", "DEP": "prep"},
-    },
-]
-
-# not <neg AUX >mark because
-neg_anchorAux_markBec = [
-    {"RIGHT_ID": "anchor_aux", "RIGHT_ATTRS": {"POS": "AUX"}},
-    {
-        "LEFT_ID": "anchor_aux",
-        "REL_OP": ">--",
-        "RIGHT_ID": "negation_particle",
-        "RIGHT_ATTRS": {"DEP": "neg"},
-    },
-    {
-        "LEFT_ID": "anchor_aux",
-        "REL_OP": ">",
-        "RIGHT_ID": "because",
-        "RIGHT_ATTRS": {"ORTH": "because", "DEP": "mark"},
-    },
-]
-
-# not <neg AUX >prep because
-neg_anchorAux_prepBec = [
-    {"RIGHT_ID": "anchor_aux", "RIGHT_ATTRS": {"POS": "AUX"}},
-    {
-        "LEFT_ID": "anchor_aux",
-        "REL_OP": ">--",
-        "RIGHT_ID": "negation_particle",
-        "RIGHT_ATTRS": {"DEP": "neg"},
-    },
-    {
-        "LEFT_ID": "anchor_aux",
-        "REL_OP": ">++",
-        "RIGHT_ID": "because",
-        "RIGHT_ATTRS": {"ORTH": "because", "DEP": "prep"},
-    },
-]
-
-# not <neg AUX >advcl AUX >mark because
-neg_anchorAux_advcl_markBec = [
-    {"RIGHT_ID": "anchor_aux", "RIGHT_ATTRS": {"POS": "AUX"}},
-    {
-        "LEFT_ID": "anchor_aux",
-        "REL_OP": ">",
-        "RIGHT_ID": "negation_particle",
-        "RIGHT_ATTRS": {"DEP": "neg"},
-    },
-    {
-        "LEFT_ID": "anchor_aux",
-        "REL_OP": ">++",
-        "RIGHT_ID": "advcl_child_aux",
-        "RIGHT_ATTRS": {"DEP": "advcl"},
-    },
-    {
-        "LEFT_ID": "advcl_child_aux",
-        "REL_OP": ">--",
-        "RIGHT_ID": "because",
-        "RIGHT_ATTRS": {"ORTH": "because", "DEP": "mark"},
-    },
-]
-
 "Initialize Dependency Matcher"
 dependency_matcher = DependencyMatcher(nlp.vocab)
-dependency_matcher.add("find patterns", not_because_dependency_patterns)
+dependency_matcher.add("find match patterns", not_because_match_patterns)
+dependency_forbidden = DependencyMatcher(nlp.vocab)
+dependency_forbidden.add("find forbidden patterns", not_because_forbidden_patterns)
 print("INFO: dependency_matcher initialized successfully.")
 
 
+# Debug
 def spaCy_parser(sentence):
     doc = nlp(sentence)
 
@@ -280,32 +40,90 @@ def spaCy_parser(sentence):
         doc_attr["alpha"].append(token.is_alpha)
         doc_attr["stop"].append(token.is_stop)
 
-    # doc_df = pd.DataFrame(doc_attr)
+    doc_df = pd.DataFrame(doc_attr)
     # print(doc_df)
-    return displacy.render(doc, style="dep")
+    return str(displacy.render(doc, style="dep")) + "<br>\n" + doc_df.to_html() + "<br>\n"
 
 
-def match_sentences(sentences, filename: str):
+def check_neg_because(doc: nlp) -> bool:
+    """Ensure input sentence in nlp format has negation followed by "because" later in the sentence. """
+    negation_i = -1
+    because_i = -1
+    doc_len = len(doc)
+    # Get index of first negation
+    for i, token in enumerate(doc):
+        token_str = token.text.lower()
+        if token_str == "not" or token_str == "n't":
+            negation_i = i
+            break
+    # Get index of last because
+    for i in range(doc_len - 1, -1, -1):
+        token_str = doc[i].text.lower()
+        if token_str == "because":
+            because_i = i
+            break
+    if -1 < negation_i < because_i:
+        return True
+    else:
+        return False
+
+
+def match_sentences(sentences: list[str], filename: str):
     last_period_i = filename.rfind('.')
     output_file_name = filename[:last_period_i] + ".html"
     num_total = len(sentences)
     num_match = 0
     for i, sentence in enumerate(sentences):
+        # # Debug
+        # # test_patterns
+        # # Test matcher
+        # doc = nlp(sentence)
+        # test_matcher = DependencyMatcher(nlp.vocab)
+        # test_matcher.add("find test patterns", test_patterns)
+        # match = dependency_matcher(doc) and not dependency_forbidden(doc) and test_matcher(doc)
+        # if i == 0:
+        #     file = open(output_file_name, "w")
+        # if match:
+        #     num_match += 1
+        #     file.write(displacy.render(doc, style="dep"))
+        #     file.write("\n" + sentence + "<br>\n")
+        #     file.write("Match!<br>\n\n\n\n\n")
+        # # else:
+        # #     file.write(displacy.render(doc, style="dep"))
+        # #     file.write("\n" + sentence + "<br>\n")
+        # #     file.write("No match<br>\n\n\n\n\n")
+        # continue
+
+        # # Debug
+        # # Dependency tree and detailed POS output
+        # # POS details
+        # if i == 0:
+        #     file = open(output_file_name, "w")
+        # file.write(spaCy_parser(sentence))
+        # continue
+
         doc = nlp(sentence)
-        matches = dependency_matcher(doc)
+        # Determine whether sentence has a matching pattern in not_because_match_patterns
+        # Return false if sentence has matching pattern in not_because_forbidden_patterns, or if sentence contains
+        # "whether or not", or if sentence starts with "Not because",
+        # or if there is not negation-because in the sentence.
+        match = dependency_matcher(doc) and not dependency_forbidden(doc) and not (
+                "whether or not" in sentence) and not sentence.startswith(
+            "Not because") and check_neg_because(doc)
 
         if i == 0:
             file = open(output_file_name, "w")
-            # file.write("These sentences should have matched. <br><br>\n")
-        if matches:
+        if match:
             num_match += 1
-            file.write(spaCy_parser(sentence))
-            file.write(sentence + "<br>")
-            file.write("Match!<br>")
+            if "negative" in filename:
+                file.write(displacy.render(doc, style="dep"))
+                file.write("\n" + sentence + "<br>\n")
+                file.write("Match!<br>\n\n\n\n\n")
         else:
-            file.write(spaCy_parser(sentence))
-            file.write(sentence + "<br>")
-            file.write("No match<br>")
+            if "positive" in filename:
+                file.write(displacy.render(doc, style="dep"))
+                file.write("\n" + sentence + "<br>\n")
+                file.write("No match<br>\n\n\n\n\n")
 
     file.write(f"{num_match}/{num_total} sentences matched.")
     file.close()
@@ -315,22 +133,16 @@ def match_sentences(sentences, filename: str):
 def NBI(filename: str):
     with open(filename, "r") as csvfile:
         sentences = csvfile.readlines()
+    # Remove whitespace at end of sentence.
     for i, sentence in enumerate(sentences):
         sentences[i] = sentence[0:-1]
     match_sentences(sentences, filename)
 
 
 if __name__ == "__main__":
-    # sentences = [
-    #     "I don't eat because I'm bored.",
-    #     "She told her that they didn't go because of the storm.",
-    #     "He did not go because of the rain.",
-    #     "He hasn't eaten while I ate because the food was free.",
-    #     "They chose not to stay in town because of the storm.",
-    #     "This sentence should not be a match.",
-    # ]
-
-    NBI("n't_bec_randomized_for_first_150_DONE_negatives.txt")
-    NBI("n't_bec_randomized_for_first_150_DONE_positives.txt")
-    NBI("not_bec_randomized_for_first_150_DONE_negatives.txt")
-    NBI("not_bec_randomized_for_first_150_DONE_positives.txt")
+    NBI("n't_bec_negatives.txt")
+    NBI("n't_bec_positives.txt")
+    NBI("not_bec_negatives.txt")
+    NBI("not_bec_positives.txt")
+    # NBI("test_negatives.txt")
+    # NBI("test_positives.txt")
