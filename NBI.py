@@ -103,10 +103,15 @@ def match_sentences(sentences: list[str], filename: str):
         # continue
 
         doc = nlp(sentence)
-        # Determine whether sentence has a matching pattern in not_because_match_patterns
-        # Return false if sentence has matching pattern in not_because_forbidden_patterns, or if sentence contains
-        # "whether or not", or if sentence starts with "Not because",
-        # or if there is not negation-because in the sentence.
+
+        """Determine whether sentence has a matching pattern in not_because_match_patterns
+          Match conditions
+        - Sentence has a matching pattern in not_because_match_patterns
+        - Sentence does not have a matching pattern in not_because_forbidden_patterns
+        - Sentence does not contain "whether or not"
+        - Sentence does not start with "not because"
+        - Sentence does not have "because" anywhere after a negation
+        """
         match = dependency_matcher(doc) and not dependency_forbidden(doc) and not (
                 "whether or not" in sentence) and not sentence.startswith(
             "Not because") and check_neg_because(doc)
@@ -133,9 +138,11 @@ def match_sentences(sentences: list[str], filename: str):
 def NBI(filename: str):
     with open(filename, "r") as csvfile:
         sentences = csvfile.readlines()
-    # Remove whitespace at end of sentence.
+
+    # Remove whitespace at end of each sentence.
     for i, sentence in enumerate(sentences):
         sentences[i] = sentence[0:-1]
+
     match_sentences(sentences, filename)
 
 
@@ -144,5 +151,7 @@ if __name__ == "__main__":
     NBI("n't_bec_positives.txt")
     NBI("not_bec_negatives.txt")
     NBI("not_bec_positives.txt")
+
+    # # Debug
     # NBI("test_negatives.txt")
     # NBI("test_positives.txt")

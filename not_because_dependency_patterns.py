@@ -146,7 +146,7 @@ not_because_match_patterns = [
         },
     ],
 
-    # not <neg VERB >"in order to" >advcl VERB >mark because
+    # not <neg VERB >"in order to" >advcl >mark because
     [
         {"RIGHT_ID": "anchor_verb", "RIGHT_ATTRS": {"POS": "VERB"}},
         {
@@ -187,7 +187,7 @@ not_because_match_patterns = [
         },
     ],
 
-    # not <neg VERB >advcl >ccomp VERB >mark because
+    # not <neg VERB >advcl >ccomp >mark because
     [
         # anchor token: some verb to be anchor_verb
         {"RIGHT_ID": "anchor_verb", "RIGHT_ATTRS": {"POS": "VERB"}},
@@ -221,7 +221,7 @@ not_because_match_patterns = [
         },
     ],
 
-    # not <neg <ccomp VERB >advcl VERB >mark because
+    # not <neg <ccomp VERB >advcl >mark because
     [
         {"RIGHT_ID": "anchor_verb", "RIGHT_ATTRS": {"POS": "VERB"}},
         {
@@ -250,7 +250,7 @@ not_because_match_patterns = [
         },
     ],
 
-    # not <neg <acomp VERB >advcl VERB >mark because
+    # not <neg <acomp VERB >advcl >mark because
     [
         {"RIGHT_ID": "anchor_verb", "RIGHT_ATTRS": {"POS": "VERB"}},
         {
@@ -279,7 +279,7 @@ not_because_match_patterns = [
         },
     ],
 
-    # not <neg <advmod VERB >advcl VERB >mark because
+    # not <neg <advmod VERB >advcl >mark because
     [
         {"RIGHT_ID": "anchor_verb", "RIGHT_ATTRS": {"POS": "VERB"}},
         {
@@ -377,7 +377,7 @@ not_because_match_patterns = [
         },
     ],
 
-    # not <neg AUX >advcl AUX >mark because
+    # not <neg AUX >advcl >mark because
     [
         {"RIGHT_ID": "anchor_aux", "RIGHT_ATTRS": {"POS": "AUX"}},
         {
@@ -400,7 +400,7 @@ not_because_match_patterns = [
         },
     ],
 
-    # not <neg <ccomp AUX >advcl VERB >mark because
+    # not <neg <ccomp AUX >advcl >mark because
     [
         {"RIGHT_ID": "anchor_aux", "RIGHT_ATTRS": {"POS": "AUX"}},
         {
@@ -690,7 +690,7 @@ not_because_forbidden_patterns = [
         },
     ],
 
-    # not <neg AUX >advcl AUX >mark because
+    # not <neg AUX >advcl >mark because
     # AUX not because
     # Pos
     # Later, Frances Strickland would say that the loss wasn't because they didn't go negative and it wasn't because of the statement about raising taxes.
